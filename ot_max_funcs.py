@@ -274,7 +274,7 @@ def updateMahalanobis_minminmax(newW, dualVars, weightMats, M, mu, sqMahalanobis
 
 def maxCostFinite(G, costMats):
     p = cvx.Variable(G.shape[1], nonneg=True)
-    problemAlgo = cvx.Problem(cvx.Minimize(cvx.sum(p)), constraints=[G * p >= 1])
+    problemAlgo = cvx.Problem(cvx.Minimize(cvx.sum(p)), constraints=[G @ p >= 1])
     problemAlgo.solve(solver='MOSEK', verbose=False)
     if problemAlgo.status == "infeasible" or p.value is None:
         return None, None, None
@@ -286,7 +286,7 @@ def maxCostFinite(G, costMats):
 
 def maxCostFiniteReg(G, costMats):
     p = cvx.Variable(G.shape[1], nonneg=True)
-    problemAlgo = cvx.Problem(cvx.Minimize(cvx.sum(p)), constraints=[G * p >= 1])
+    problemAlgo = cvx.Problem(cvx.Minimize(cvx.sum(p)), constraints=[G @ p >= 1])
     problemAlgo.solve(solver='MOSEK', verbose=False)
     if problemAlgo.status == "infeasible" or p.value is None:
         return None, None, None
@@ -394,9 +394,9 @@ def updateMahalanobisSVM(newW, dualVars, weightMats, data, y_data, stBox, d, m, 
 def maxCostMahalanobisDual(V, X_s, X_t, p=None):
     p = cvx.Variable(V.shape[0], nonneg=True)
     problem = cvx.Problem(objective=cvx.Minimize(cvx.quad_form(p, np.dot(V, V.T))), constraints=[cvx.sum(p) == 1])
-    problem.solve(solver='OSQP', max_iter=100000000, eps_abs=1e-12, eps_rel=1e-14)
+    # problem.solve(solver='OSQP', max_iter=100000000, eps_abs=1e-12, eps_rel=1e-14)
     #    problem.solve(solver= 'ECOS', max_iters=100000000, abstol= 1e-10, reltol= 1e-10, feastol= 1e-10)
-    #    problem.solve(solver= 'SCS', max_iters=100000000, eps= 1e-12, use_indirect= False)
+    problem.solve(solver= 'SCS', max_iters=100000000, eps= 1e-12, use_indirect= False)
     p = p.value
 
     d = X_s.shape[1]
@@ -531,13 +531,15 @@ def weightsAndInds(W):
 def plotTransport(X_s, X_t, W, title):
     plt.figure()
     #    plt.subplot(1,2,1)
-    plt.scatter(*X_s[:, :2].T)
-    plt.scatter(*X_t[:, :2].T)
+    plt.scatter(*X_s[:, :2].T, edgecolors= "k")
+    plt.scatter(*X_t[:, :2].T, edgecolors= "k")
 
     weights, inds = weightsAndInds(W)
+    weights = weights **3
+    # weights /= np.sum(weights)
     weights /= np.max(weights)
     for ind_s, ind_t, weight in zip(*(tuple(inds) + (weights,))):
-        plt.plot([X_s[ind_s, 0], X_t[ind_t, 0]], [X_s[ind_s, 1], X_t[ind_t, 1]], color='k', alpha=0.2 * weight)
+        plt.plot([X_s[ind_s, 0], X_t[ind_t, 0]], [X_s[ind_s, 1], X_t[ind_t, 1]], color='k', alpha= 0.5*weight)
     plt.title(title)
 
     return None
