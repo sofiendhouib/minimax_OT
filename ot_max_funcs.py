@@ -528,20 +528,32 @@ def weightsAndInds(W):
         return W[logicInds], np.array(inds)
 
 
+from matplotlib.collections import LineCollection
 def plotTransport(X_s, X_t, W, title):
-    plt.figure()
-    #    plt.subplot(1,2,1)
-    plt.scatter(*X_s[:, :2].T, edgecolors= "k")
-    plt.scatter(*X_t[:, :2].T, edgecolors= "k")
-
+    
     weights, inds = weightsAndInds(W)
-    weights = weights **3
-    # weights /= np.sum(weights)
+    # weights = weights **3
     weights /= np.max(weights)
-    for ind_s, ind_t, weight in zip(*(tuple(inds) + (weights,))):
-        plt.plot([X_s[ind_s, 0], X_t[ind_t, 0]], [X_s[ind_s, 1], X_t[ind_t, 1]], color='k', alpha= 0.5*weight)
-    plt.title(title)
-
+    fig, ax = plt.subplots()
+    #    plt.subplot(1,2,1)
+    labels = np.hstack((np.ones(len(X_s)), -np.ones(len(X_t))))
+    
+    ax.scatter(*np.vstack((X_s[:, :2], X_t[:,:2])).T, edgecolors= "k", c= labels, cmap= "Paired")
+   
+    # with a for loop, slow
+    # for ind_s, ind_t, weight in zip(*(tuple(inds) + (weights,))):
+    #     plt.plot([X_s[ind_s, 0], X_t[ind_t, 0]], [X_s[ind_s, 1], X_t[ind_t, 1]], color='k', alpha= 0.5*weight)
+    # plt.title(title)
+    # with Matplotlib's LineCollection
+    # segments = [np.column_stack([[X_s[ind_s, 0], X_t[ind_t, 0]], [X_s[ind_s, 1], X_t[ind_t, 1]]]) for ind_s, ind_t in zip(*tuple(inds))]
+    segments = np.moveaxis(np.dstack((X_s[inds[0],:2], X_t[inds[1],:2])),1,2)
+    line_segments = LineCollection(segments, colors= np.hstack((np.zeros((len(weights),3)), 0.3*weights[:,None]**5)), rasterized= True)
+    ax.add_collection(line_segments)
+    
+    ax.set_aspect("equal")
+    ax.set_xticks(())
+    ax.set_yticks(())
+    fig.tight_layout()
     return None
 
 """

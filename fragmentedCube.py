@@ -53,8 +53,8 @@ def fragmented_hypercube(n, d, dim, pos, magnitude= 1):
 
     return a, b, X, Y
 
-d = 50
-n = 100
+d = 30
+n = 250
 dims = [2, 4, 7, 10]
 k_star = 2
 
@@ -90,7 +90,7 @@ W0 = emd(ones/n, ones/n, cdist(cube, transformCube))
 weightMats = csr_matrix(W0.reshape(1, n*n))
 V0 = otMax.vecDisplacementMatrix(cube, transformCube, W0)
 V0 = V0.reshape(1,len(V0))
-W_Mahalanobis, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(ones/n, ones/n, maxIter= 400, threshold= 1e-10, 
+W_Mahalanobis, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(ones/n, ones/n, maxIter= 400, threshold= 1e-8, 
                                                                                              weightMats= weightMats, 
                                                                                              maxCost= otMax.maxCostMahalanobisDual, 
                                                                                              updateFunc= otMax.updateMahalanobisDual, 
@@ -140,20 +140,17 @@ W_list    = [
             ]
 title_list = [
               "Wasserstein", 
-              "RKP: Mahalanobis", 
-              "RKP: 1D projections",
-              "RKP: 2D projections", 
-              "SRW",
+              "RKP-Mahalanobis", 
+              "RKP-1D-projections",
+              "RKP-2D-projections", 
+               "SRW",
               ]
 
 
 
-print("plotting ...") 
+# print("plotting ...") 
+plt.close('all')
 for W , title in zip(W_list, title_list):
     otMax.plotTransport(cube, transformCube, W, title= None)
-    plt.xticks(())
-    plt.yticks(())
-    plt.tight_layout()
-    plt.savefig("./hypercube/"+title + ".pdf", format= "pdf", bbox_inches='tight', pad_inches= 0)
-    # plt.savefig("./hypercube/"+title + ".pgf", format= "pgf", bbox_inches='tight', pad_inches= 0)
-    
+    plt.axis("off")
+    plt.savefig("./hypercube/"+title + ".pdf", format= "pdf", bbox_inches='tight', pad_inches= 0) 
