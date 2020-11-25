@@ -90,7 +90,7 @@ W0 = emd(ones/n, ones/n, cdist(cube, transformCube))
 weightMats = csr_matrix(W0.reshape(1, n*n))
 V0 = otMax.vecDisplacementMatrix(cube, transformCube, W0)
 V0 = V0.reshape(1,len(V0))
-W_Mahalanobis, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(ones/n, ones/n, maxIter= 400, threshold= 1e-8, 
+W_Mahalanobis, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(ones/n, ones/n, maxIter= 400, threshold= 1e-5, 
                                                                                              weightMats= weightMats, 
                                                                                              maxCost= otMax.maxCostMahalanobisDual, 
                                                                                              updateFunc= otMax.updateMahalanobisDual, 
@@ -104,12 +104,12 @@ for k in range(d):
 weightMats = csr_matrix(np.outer(ones/n, ones/n).reshape(1, n*n))
 G = np.array([np.einsum('ij, kij -> k', weightMats.toarray().reshape(n,n), costMats)])
 
-W_finite_1, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(r= ones/n, c= ones/n, maxIter= 100, threshold= 1e-9, weightMats= weightMats, maxCost= otMax.maxCostFinite,updateFunc = otMax.updateFinite,
+W_finite_1, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(r= ones/n, c= ones/n, maxIter= 100, threshold= 1e-5, weightMats= weightMats, maxCost= otMax.maxCostFinite,updateFunc = otMax.updateFinite,
                         arguments= (G, costMats), verbose= False, output= 1)
 #%% finite number of 2D projections 
 costMats = []
 tupleList = []
-for t in combinations(range(d),k_star):
+for t in combinations(range(d),2):
     tupleList.append(t)
     costMats.append(cdist(cube[:,[*t]], transformCube[:, [*t]], "sqeuclidean"))
 
@@ -117,8 +117,23 @@ costMats = np.array(costMats)
 weightMats = csr_matrix(np.outer(ones/n, ones/n).reshape(1, n*n))
 G = np.array([np.einsum('ij, kij -> k', weightMats.toarray().reshape(n,n), costMats)])
 
-W_finite_2, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(r= ones/n, c= ones/n, maxIter= 100, threshold= 1e-9, weightMats= weightMats, maxCost= otMax.maxCostFinite,updateFunc = otMax.updateFinite,
+W_finite_2, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(r= ones/n, c= ones/n, maxIter= 100, threshold= 1e-5, weightMats= weightMats, maxCost= otMax.maxCostFinite,updateFunc = otMax.updateFinite,
                         arguments= (G, costMats), verbose= False, output= 1)
+
+#%% finite number of 3D projections 
+costMats = []
+tupleList = []
+for t in combinations(range(d),3):
+    tupleList.append(t)
+    costMats.append(cdist(cube[:,[*t]], transformCube[:, [*t]], "sqeuclidean"))
+
+costMats = np.array(costMats)
+weightMats = csr_matrix(np.outer(ones/n, ones/n).reshape(1, n*n))
+G = np.array([np.einsum('ij, kij -> k', weightMats.toarray().reshape(n,n), costMats)])
+
+W_finite_3, error, muValueDual, C_star, arguments, dualVars, weightMats = otMax.minimaxOT(r= ones/n, c= ones/n, maxIter= 100, threshold= 1e-5, weightMats= weightMats, maxCost= otMax.maxCostFinite,updateFunc = otMax.updateFinite,
+                        arguments= (G, costMats), verbose= False, output= 1)
+
 
 #%% SRW code
 FW = FrankWolfe(reg=1, step_size_0=None, max_iter=1000, threshold=0.01, max_iter_sinkhorn=50, threshold_sinkhorn=1e-4, use_gpu=False)
@@ -136,6 +151,7 @@ W_list    = [
 #            W_sinkh,
             W_finite_1,
             W_finite_2, 
+            W_finite_3,
             W_SRW,
             ]
 title_list = [
@@ -143,6 +159,7 @@ title_list = [
               "RKP-Mahalanobis", 
               "RKP-1D-projections",
               "RKP-2D-projections", 
+              "RKP-3D-projections", 
                "SRW",
               ]
 
@@ -151,6 +168,7 @@ title_list = [
 # print("plotting ...") 
 plt.close('all')
 for W , title in zip(W_list, title_list):
-    otMax.plotTransport(cube, transformCube, W, title= None)
+    power= 4 if title == "SRW" else 1
+    otMax.plotTransport(cube, transformCube, W, title= None, power= power)
     plt.axis("off")
-    plt.savefig("./hypercube/"+title + ".pdf", format= "pdf", bbox_inches='tight', pad_inches= 0) 
+    plt.savefig("./hypercube/"+title + ".pdf", format= "pdf", bbox_inches= 'tight', pad_inches= 0) 

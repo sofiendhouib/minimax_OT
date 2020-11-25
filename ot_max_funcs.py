@@ -529,7 +529,7 @@ def weightsAndInds(W):
 
 
 from matplotlib.collections import LineCollection
-def plotTransport(X_s, X_t, W, title):
+def plotTransport(X_s, X_t, W, title, power= 2):
     
     weights, inds = weightsAndInds(W)
     # weights = weights **3
@@ -547,7 +547,7 @@ def plotTransport(X_s, X_t, W, title):
     # with Matplotlib's LineCollection
     # segments = [np.column_stack([[X_s[ind_s, 0], X_t[ind_t, 0]], [X_s[ind_s, 1], X_t[ind_t, 1]]]) for ind_s, ind_t in zip(*tuple(inds))]
     segments = np.moveaxis(np.dstack((X_s[inds[0],:2], X_t[inds[1],:2])),1,2)
-    line_segments = LineCollection(segments, colors= np.hstack((np.zeros((len(weights),3)), 0.3*weights[:,None]**5)), rasterized= True)
+    line_segments = LineCollection(segments, colors= np.hstack((np.zeros((len(weights),3)), 0.3*weights[:,None]**power)), rasterized= True)
     ax.add_collection(line_segments)
     
     ax.set_aspect("equal")
